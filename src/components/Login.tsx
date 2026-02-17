@@ -4,6 +4,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { loginSchema, type LoginSchema } from '../models/Auth.Schema';
 import './Register.css';
 import { useNavigate } from 'react-router-dom'; 
+import { authService } from '../api/Service'; 
 
 const Login = () => {
     const navigate = useNavigate();
@@ -17,10 +18,23 @@ const Login = () => {
         resolver: zodResolver(loginSchema),
         mode: "onBlur"
     });
+    const onSubmit = async (data: LoginSchema) => {
+        try {
+            console.log("Intentando iniciar sesión...");
+            await authService.login(data);
+            
+            console.log("Login exitoso.");
+            navigate('/dashboard'); 
+        } catch (error: unknown) {
+            console.error("Error en el login:", error);
+            const axiosError = error as { response?: { data?: { detail?: string; message?: string } } };
+            const errorMessage = 
+                axiosError.response?.data?.detail || 
+                axiosError.response?.data?.message || 
+                "Correo o contraseña incorrectos";
 
-    const onSubmit = (data: LoginSchema) => {
-        console.log("Datos Validos:", data);
-        navigate('/dashboard');
+            alert(errorMessage);
+        }
     };
 
     return (
@@ -65,23 +79,14 @@ const Login = () => {
                                 className="password-toggle"
                                 onClick={() => setShowPassword(!showPassword)}
                             >
-                                {showPassword ? (
-                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
-                                        <circle cx="12" cy="12" r="3"></circle>
-                                    </svg>
-                                ) : (
-                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                        <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
-                                        <line x1="1" y1="1" x2="23" y2="23"></line>
-                                    </svg>
-                                )}
+                                {showPassword ? "Ocultar" : "Mostrar"}
                             </button>
                         </div>
                         {errors.password && <span className="error-text">{errors.password.message}</span>}
                     </div>
 
-                    <button type="submit" className="btn-submit">Ingresar</button>
+                    {/* Asegúrate de que la clase CSS sea consistente */}
+                    <button type="submit" className="submit-button">Ingresar</button>
                 </form>
             </div>
         </div>
