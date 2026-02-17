@@ -1,0 +1,193 @@
+.register-container {
+    height: 100vh;
+    width: 100vw;
+    position: relative;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: #020617;
+    overflow: hidden;
+}
+
+.register-container::before {
+    content: "";
+    position: absolute;
+    top: -20%;
+    left: -10%;
+    width: 50vw;
+    height: 50vw;
+    background: radial-gradient(circle, rgba(14, 205, 0, 0.15), transparent 70%);
+    filter: blur(80px);
+    z-index: 0;
+}
+
+.back-button {
+    position: absolute;
+    top: 30px;
+    left: 30px;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: white;
+    width: 45px;
+    height: 45px;
+    border-radius: 12px;
+    cursor: pointer;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    transition: all 0.2s;
+    z-index: 10;
+}
+
+
+.register-card {
+    position: relative;
+    z-index: 1;
+    width: 90%;
+    max-width: 400px;
+    background: rgba(30, 41, 59, 0.7);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 24px;
+    padding: 40px 30px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+}
+
+.form-title {
+    color: white;
+    margin-bottom: 30px;
+    font-size: 1.8rem;
+}
+
+.register-form {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+
+.input-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    text-align: left;
+    width: 100%;
+}
+
+.input-group label {
+    color: #94a3b8;
+    font-size: 0.9rem;
+    margin-left: 4px;
+}
+
+.input-group input {
+    background: #0f172a;
+    border: 1px solid #334155;
+    padding: 12px 16px;
+    border-radius: 12px;
+    color: white;
+    outline: none;
+    transition: all 0.2s;
+    width: 100%;
+    box-sizing: border-box;
+    font-family: inherit;
+}
+
+.input-group input:focus {
+    border-color: #0ECD00;
+    box-shadow: 0 0 0 3px rgba(14, 205, 0, 0.1);
+}
+
+
+.password-wrapper {
+    position: relative;
+    width: 100%;
+    display: flex;
+    align-items: center;
+}
+
+.password-wrapper input {
+    padding-right: 45px;
+}
+
+.password-toggle {
+    position: absolute;
+    right: 12px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: #94a3b8;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 4px;
+    border-radius: 50%;
+    transition: all 0.2s;
+    z-index: 5;
+}
+
+.password-toggle:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: #AEFF00;
+    transform: scale(1.1);
+}
+
+
+.checkbox-group {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: #94a3b8;
+    font-size: 0.85rem;
+}
+
+.btn-submit {
+    background: #3b82f6;
+    color: white;
+    border: none;
+    padding: 14px;
+    border-radius: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    margin-top: 10px;
+    transition: transform 0.2s;
+    width: 100%;
+}
+
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes popIn {
+    from {
+        transform: scale(0.8);
+    }
+
+    to {
+        transform: scale(1);
+    }
+}
+
+.error-text {
+    color: #ff4d4d;
+    font-size: 0.8rem;
+    margin-top: 4px;
+    text-align: left;
+    animation: fadeIn 0.3s ease-in-out;
+}
+
+.input-group input:has(+ .error-text),
+.password-wrapper:has(+ .error-text) input {
+    border-color: #ff4d4d;
+}
