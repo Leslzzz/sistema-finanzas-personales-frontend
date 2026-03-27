@@ -1,10 +1,9 @@
 .dashboard-container {
     min-height: 100vh;
-    width: 100vw;
+    width: 100%;
     background-color: #020617;
     color: white;
     position: relative;
-    overflow-x: hidden;
     display: flex;
     flex-direction: column;
 }
@@ -26,18 +25,19 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 15px 30px;
+    padding: 1rem 2rem;
     background: rgba(15, 23, 42, 0.6);
     backdrop-filter: blur(12px);
     border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-    position: relative;
+    position: sticky;
+    top: 0;
     z-index: 50;
-    gap: 20px;
+    gap: 1.5rem;
 }
 
 .nav-logo {
     font-weight: 800;
-    font-size: 1.5rem;
+    font-size: 1.6rem;
     background: linear-gradient(90deg, #AEFF00, #0ECD00);
     -webkit-background-clip: text;
     background-clip: text;
@@ -52,22 +52,231 @@
     align-items: center;
 }
 
+.nav-right {
+    justify-content: flex-end;
+    gap: 1rem;
+}
+
+.nav-center {
+    flex: 2;
+    max-width: 42rem;
+}
+
+.search-bar-container {
+    display: flex;
+    align-items: center;
+    background-color: rgba(30, 41, 59, 0.5);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 0.75rem;
+    padding: 0.5rem 1rem;
+    transition: all 0.3s ease;
+}
+
+.search-bar-container:focus-within {
+    border-color: #AEFF00;
+    box-shadow: 0 0 1rem rgba(174, 255, 0, 0.1);
+}
+
+.search-icon {
+    color: #64748b;
+    font-size: 1.1rem;
+    margin-right: 0.6rem;
+}
+
+.search-input {
+    background: transparent;
+    border: none;
+    color: white;
+    width: 100%;
+    outline: none;
+    font-size: 0.95rem;
+}
+
+.search-input::placeholder {
+    color: #64748b;
+}
+
+.icon-btn {
+    background: rgba(30, 41, 59, 0.5);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: #cbd5e1;
+    padding: 0.6rem;
+    border-radius: 0.75rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.1rem;
+    transition: all 0.2s ease;
+}
+
+.icon-btn:hover {
+    background: rgba(174, 255, 0, 0.1);
+    color: #AEFF00;
+    border-color: #AEFF00;
+}
+
+.user-menu-wrapper { position: relative; }
+
+.user-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    padding: 0.4rem 0.8rem;
+    border-radius: 0.75rem;
+    transition: background 0.2s ease;
+}
+
+.user-btn:hover,
+.user-btn.active { background: rgba(255, 255, 255, 0.05); }
+
+.user-avatar {
+    width: 2.4rem;
+    height: 2.4rem;
+    background: linear-gradient(135deg, #AEFF00, #0ECD00);
+    color: #020617;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.1rem;
+    font-weight: 600;
+}
+
+.user-name { color: white; font-weight: 600; font-size: 0.95rem; }
+
+.chevron { color: #64748b; transition: transform 0.3s ease; }
+.chevron.rotate { transform: rotate(180deg); }
+
+.user-dropdown {
+    position: absolute;
+    top: calc(100% + 0.6rem);
+    right: 0;
+    width: 14rem;
+    background: #1e293b;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 1rem;
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5);
+    overflow: hidden;
+    animation: slideDown 0.2s ease-out;
+}
+
+@keyframes slideDown {
+    from { opacity: 0; transform: translateY(-0.6rem); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+.dropdown-header {
+    padding: 1rem;
+    background: rgba(0, 0, 0, 0.2);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.dropdown-header p { font-size: 0.8rem; color: #94a3b8; margin: 0; }
+.dropdown-header h4 { margin: 0.3rem 0 0 0; color: white; }
+
+.dropdown-list { list-style: none; padding: 0.5rem; margin: 0; }
+
+.dropdown-item {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    padding: 0.6rem 0.8rem;
+    background: transparent;
+    border: none;
+    color: #cbd5e1;
+    text-align: left;
+    font-size: 0.95rem;
+    border-radius: 0.6rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.dropdown-item:hover { background: rgba(255,255,255,0.05); color: white; }
+.dropdown-item.danger:hover { background: rgba(239,68,68,0.15); color: #ef4444; }
+
+.divider { height: 1px; background: rgba(255,255,255,0.08); margin: 0.5rem 0; }
 
 .main-content {
     flex: 1;
     display: flex;
-    justify-content: center;
+    flex-direction: column;
     align-items: center;
-    padding: 40px;
+    padding: 2.5rem 3rem 4rem;
+    position: relative;
+    z-index: 1;
 }
 
 .welcome-card {
-    text-align: center;
-    max-width: 800px;
+    max-width: 80rem;
     width: 100%;
-
     display: flex;
     flex-direction: column;
-    align-items: center; 
-    justify-content: center;
+    align-items: flex-start;
 }
+
+.welcome-card h1 {
+    font-size: clamp(2rem, 3vw, 3rem);
+    margin-bottom: 0.6rem;
+    align-self: center;
+    width: 100%;
+    text-align: center;
+}
+
+.welcome-card .subtitle {
+    align-self: center;
+    width: 100%;
+    text-align: center;
+    margin-bottom: 2.5rem;
+}
+
+.subtitle { color: #94a3b8; font-size: clamp(1rem, 1.3vw, 1.3rem); }
+
+.loading-state { font-size: 1.4rem; color: #AEFF00; align-self: center; margin-top: 8rem; }
+
+.widgets-placeholder {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
+    gap: 1.5rem;
+    margin-top: 2.5rem;
+    opacity: 0.5;
+    width: 100%;
+}
+
+.widget-box { border: 1px dashed #334155; padding: 2.5rem; border-radius: 1rem; color: #64748b; font-weight: 500; }
+
+@media (min-width: 1800px) {
+    .dashboard-nav { padding: 1.2rem 3rem; }
+    .main-content  { padding: 3rem 4rem 5rem; }
+    .welcome-card h1 { font-size: 3.2rem; }
+}
+
+@media (max-width: 900px) {
+    .nav-center { display: none; }
+    .dashboard-nav { padding: 1rem; }
+    .main-content { padding: 1.5rem 1rem 3rem; }
+}
+.fab-add-button {
+    position: fixed;
+    bottom: 40px;
+    right: 40px;
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #AEFF00, #0ECD00);
+    color: #020617;
+    font-size: 2rem;
+    border: none;
+    cursor: pointer;
+    box-shadow: 0 10px 25px rgba(14, 205, 0, 0.4);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 50;
+    transition: transform 0.2s;
+}
+.fab-add-button:hover { transform: scale(1.1); }

@@ -6,7 +6,9 @@ const LandingPage = () => {
     return (
         <div className="landing-container">
             <div className="main-layout">
-
+                <nav className="landing-nav">
+                    <div className="nav-logo">Finanzly</div>
+                </nav>
                 <div className="content-grid">
                     <div className="text-side">
                         <h1 className="title">Toma el control de tu futuro financiero</h1>

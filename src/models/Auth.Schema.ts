@@ -19,15 +19,6 @@ export const registerSchema = z.object({
     password: z
         .string()
         .min(6, { message: "Mínimo 6 caracteres" }),
-    confirmPassword: z
-        .string()
-        .min(6, { message: "Mínimo 6 caracteres" }),
-    terms: z
-        .boolean()
-        .refine((val) => val === true, { message: "Debes aceptar los términos" }),
-}).refine((data) => data.password === data.confirmPassword, {
-    message: "Las contraseñas no coinciden",
-    path: ["confirmPassword"],
 });
 
 export type LoginSchema = z.infer<typeof loginSchema>;

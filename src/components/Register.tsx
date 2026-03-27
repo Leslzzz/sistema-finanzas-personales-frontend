@@ -9,7 +9,6 @@ import { authService } from '../api/Service';
 const Register = () => {
     const navigate = useNavigate();
     const [showPassword, setShowPassword] = useState(false);
-
     const {
         register,
         handleSubmit,
@@ -25,24 +24,35 @@ const Register = () => {
             await authService.register(data); 
             
             alert("¡Cuenta creada exitosamente en Railway!");
-            navigate('/'); 
-        } catch (error: unknown) {
-            console.error("Error en el registro:", error);
-            
-            const axiosError = error as { response?: { data?: { email?: string; message?: string } } };
-            
-            const errorMessage = 
-                axiosError.response?.data?.email || 
-                axiosError.response?.data?.message || 
-                "Error al crear la cuenta";
-                
-            alert(errorMessage);
+            navigate('/landing'); 
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        } catch (error: any) {
+    console.error("Error completo:", error);
+
+    const errores = error.response?.data;
+    let mensajeFinal = "Error al crear la cuenta";
+
+    if (errores) {
+        if (errores.email) {
+            mensajeFinal = "Email: " + errores.email[0];
+        } else if (errores.password) {
+            mensajeFinal = "Password: " + errores.password[0];
+        } else if (errores.name) {
+            mensajeFinal = "Name: " + errores.name[0];
+        } else if (errores.detail) {
+            mensajeFinal = errores.detail;
+        }
+    } else if (error.request) {
+        mensajeFinal = "El servidor de Railway no responde. ¿Está encendido?";
+    }
+
+    alert(mensajeFinal);
         }
     };
 
     return (
         <div className="register-container">
-            <button className="back-button" onClick={() => navigate('/')}>
+            <button className="back-button" onClick={() => navigate('/landing')}>
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                     <path d="M19 12H5M12 19l-7-7 7-7" />
                 </svg>
@@ -98,7 +108,7 @@ const Register = () => {
                         {errors.password && <span className="error-text">{errors.password.message}</span>}
                     </div>
 
-                    <button type="submit" className="submit-button">Registrarse</button>
+                    <button type="submit" className="btn-submit">Registrarse</button>
                 </form>
             </div>
         </div>

@@ -1,0 +1,396 @@
+/* AddTransaction.css */
+
+.at-container {
+    min-height: 100vh;
+    background-color: #020617;
+    color: white;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    overflow-x: hidden;
+}
+
+.at-container::before {
+    content: "";
+    position: absolute;
+    bottom: -10%;
+    left: -10%;
+    width: 55vw;
+    height: 55vw;
+    background: radial-gradient(circle, rgba(14, 205, 0, 0.08), transparent 70%);
+    filter: blur(80px);
+    z-index: 0;
+    pointer-events: none;
+}
+
+/* ── Header ── */
+.at-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem 2rem;
+    background: rgba(15, 23, 42, 0.6);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    position: sticky;
+    top: 0;
+    z-index: 50;
+}
+
+.at-back-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: rgba(30, 41, 59, 0.5);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: #cbd5e1;
+    padding: 0.5rem 1rem;
+    border-radius: 0.75rem;
+    cursor: pointer;
+    font-size: 0.9rem;
+    transition: all 0.2s ease;
+}
+
+.at-back-btn:hover {
+    background: rgba(174, 255, 0, 0.08);
+    color: #AEFF00;
+    border-color: rgba(174, 255, 0, 0.3);
+}
+
+.at-logo {
+    font-weight: 800;
+    font-size: 1.5rem;
+    background: linear-gradient(90deg, #AEFF00, #0ECD00);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+/* ── Main ── */
+.at-main {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    padding: 3rem 1.5rem 5rem;
+    position: relative;
+    z-index: 1;
+}
+
+.at-card {
+    width: 100%;
+    max-width: 36rem;
+    background: rgba(15, 23, 42, 0.8);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 1.5rem;
+    padding: 2.5rem;
+    backdrop-filter: blur(12px);
+    animation: at-slideUp 0.3s ease-out;
+}
+
+@keyframes at-slideUp {
+    from { opacity: 0; transform: translateY(1.5rem); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+.at-title {
+    font-size: 1.8rem;
+    font-weight: 800;
+    margin: 0 0 0.3rem 0;
+    text-align: center;
+}
+
+.at-subtitle {
+    font-size: 0.9rem;
+    color: #64748b;
+    text-align: center;
+    margin: 0 0 2rem 0;
+}
+
+/* ── Tabs ── */
+.at-tabs {
+    display: flex;
+    gap: 0.5rem;
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 1rem;
+    padding: 0.35rem;
+    margin-bottom: 2rem;
+}
+
+.at-tab {
+    flex: 1;
+    padding: 0.55rem;
+    border: none;
+    border-radius: 0.7rem;
+    background: transparent;
+    color: #64748b;
+    font-size: 0.88rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-transform: capitalize;
+}
+
+.at-tab--active.at-tab--gasto {
+    background: rgba(239, 68, 68, 0.15);
+    color: #ef4444;
+}
+
+.at-tab--active.at-tab--ingreso {
+    background: rgba(174, 255, 0, 0.12);
+    color: #AEFF00;
+}
+
+.at-tab--active.at-tab--presupuesto {
+    background: rgba(34, 211, 238, 0.12);
+    color: #22d3ee;
+}
+
+.at-tab:not(.at-tab--active):hover {
+    color: #94a3b8;
+    background: rgba(255, 255, 255, 0.04);
+}
+
+/* ── Form ── */
+.at-form {
+    display: flex;
+    flex-direction: column;
+    gap: 1.4rem;
+}
+
+.at-field {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.at-field label {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: #94a3b8;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.at-input {
+    background: rgba(30, 41, 59, 0.6);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 0.75rem;
+    color: white;
+    padding: 0.7rem 1rem;
+    font-size: 0.95rem;
+    outline: none;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    width: 100%;
+}
+
+.at-input:focus {
+    border-color: #AEFF00;
+    box-shadow: 0 0 0.8rem rgba(174, 255, 0, 0.1);
+}
+
+.at-input::placeholder { color: #475569; }
+
+.at-input--date { color-scheme: dark; }
+
+.at-amount-wrap {
+    display: flex;
+    align-items: center;
+    background: rgba(30, 41, 59, 0.6);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 0.75rem;
+    overflow: hidden;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.at-amount-wrap:focus-within {
+    border-color: #AEFF00;
+    box-shadow: 0 0 0.8rem rgba(174, 255, 0, 0.1);
+}
+
+.at-currency {
+    padding: 0 0.8rem 0 1rem;
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: #AEFF00;
+    user-select: none;
+}
+
+.at-input--big {
+    background: transparent;
+    border: none;
+    box-shadow: none;
+    font-size: 1.8rem;
+    font-weight: 700;
+    padding: 0.6rem 1rem 0.6rem 0;
+    flex: 1;
+    width: auto;
+}
+
+.at-input--big:focus {
+    border: none;
+    box-shadow: none;
+}
+
+/* Remove number input arrows */
+.at-input--big::-webkit-outer-spin-button,
+.at-input--big::-webkit-inner-spin-button { -webkit-appearance: none; }
+.at-input--big[type=number] { appearance: textfield; }
+
+/* ── Categories ── */
+.at-categories {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 0.6rem;
+}
+
+.at-cat-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.75rem 0.4rem;
+    background: rgba(30, 41, 59, 0.5);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 0.85rem;
+    color: #64748b;
+    font-size: 0.75rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.at-cat-btn svg { font-size: 1.2rem; }
+
+.at-cat-btn:hover {
+    border-color: var(--cat-color);
+    color: var(--cat-color);
+    background: color-mix(in srgb, var(--cat-color) 8%, transparent);
+}
+
+.at-cat-btn--active {
+    border-color: var(--cat-color) !important;
+    color: var(--cat-color) !important;
+    background: color-mix(in srgb, var(--cat-color) 12%, transparent) !important;
+    box-shadow: 0 0 0.8rem color-mix(in srgb, var(--cat-color) 20%, transparent);
+}
+
+/* ── Date row ── */
+.at-date-row {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.at-date-sep { color: #475569; }
+
+/* ── Actions ── */
+.at-actions {
+    display: flex;
+    gap: 0.75rem;
+    margin-top: 2rem;
+}
+
+.at-btn-ghost {
+    flex: 1;
+    background: transparent;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: #94a3b8;
+    padding: 0.75rem;
+    border-radius: 0.85rem;
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.at-btn-ghost:hover {
+    background: rgba(255, 255, 255, 0.05);
+    color: white;
+}
+
+.at-btn-primary {
+    flex: 2;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    background: linear-gradient(135deg, #AEFF00, #0ECD00);
+    color: #020617;
+    padding: 0.75rem;
+    border: none;
+    border-radius: 0.85rem;
+    font-size: 0.95rem;
+    font-weight: 800;
+    cursor: pointer;
+    transition: all 0.25s ease;
+}
+
+.at-btn-primary:hover:not(:disabled) {
+    opacity: 0.88;
+    transform: translateY(-1px);
+    box-shadow: 0 6px 20px rgba(174, 255, 0, 0.3);
+}
+
+.at-btn-primary:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.at-btn--saved {
+    background: linear-gradient(135deg, #22d3ee, #0284c7) !important;
+    opacity: 1 !important;
+}
+
+/* ── Responsive ── */
+@media (max-width: 600px) {
+    .at-card { padding: 1.5rem; }
+    .at-categories { grid-template-columns: repeat(3, 1fr); }
+    .at-input--big { font-size: 1.4rem; }
+}
+
+/* Nuevo Overlay oscuro */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(2, 6, 23, 0.85); /* Fondo oscuro con transparencia */
+    backdrop-filter: blur(8px);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 9999;
+    animation: fadeIn 0.2s ease-out;
+}
+
+/* Modificamos el at-card para que no ocupe toda la pantalla */
+.modal-content {
+    width: 90%;
+    max-width: 500px;
+    max-height: 90vh;
+    overflow-y: auto; /* Por si la pantalla es muy pequeña */
+    position: relative;
+    padding: 30px;
+}
+
+/* Botón flotante para cerrar */
+.modal-close-btn {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    background: none;
+    border: none;
+    color: #94a3b8;
+    font-size: 1.5rem;
+    cursor: pointer;
+    transition: color 0.2s;
+}
+
+.modal-close-btn:hover {
+    color: #ef4444; /* Rojo al pasar el mouse */
+}

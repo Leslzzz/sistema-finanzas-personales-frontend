@@ -1,0 +1,433 @@
+/* Onboarding.css */
+
+.ob-container {
+    min-height: 100vh;
+    background-color: #020617;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem 1rem;
+    position: relative;
+    overflow: hidden;
+}
+
+/* Ambient glows */
+.ob-glow {
+    position: absolute;
+    width: 50vw;
+    height: 50vw;
+    border-radius: 50%;
+    filter: blur(90px);
+    pointer-events: none;
+    z-index: 0;
+}
+
+.ob-glow--tr {
+    top: -15%;
+    right: -15%;
+    background: radial-gradient(circle, rgba(14, 205, 0, 0.12), transparent 70%);
+}
+
+.ob-glow--bl {
+    bottom: -15%;
+    left: -15%;
+    background: radial-gradient(circle, rgba(174, 255, 0, 0.06), transparent 70%);
+}
+
+/* ── Card ── */
+.ob-card {
+    position: relative;
+    z-index: 1;
+    width: 100%;
+    max-width: 32rem;
+    background: rgba(15, 23, 42, 0.85);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 1.8rem;
+    padding: 2.5rem 2.5rem 2rem;
+    backdrop-filter: blur(16px);
+    box-shadow: 0 30px 80px rgba(0, 0, 0, 0.5);
+    display: flex;
+    flex-direction: column;
+    gap: 1.2rem;
+}
+
+/* ── Logo ── */
+.ob-logo {
+    font-weight: 800;
+    font-size: 1.5rem;
+    background: linear-gradient(90deg, #AEFF00, #0ECD00);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    text-align: center;
+    letter-spacing: -0.02em;
+}
+
+/* ── Progress dots ── */
+.ob-progress {
+    display: flex;
+    justify-content: center;
+    gap: 0.5rem;
+}
+
+.ob-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.12);
+    transition: all 0.3s ease;
+}
+
+.ob-dot--active {
+    background: #AEFF00;
+    width: 24px;
+    border-radius: 99px;
+}
+
+.ob-dot--done {
+    background: #0ECD00;
+}
+
+.ob-step-label {
+    text-align: center;
+    font-size: 0.78rem;
+    color: #475569;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin: -0.4rem 0;
+}
+
+.ob-step-label strong {
+    color: #94a3b8;
+}
+
+/* ── Step content ── */
+.ob-content {
+    animation: ob-fadeSlide 0.28s ease-out;
+}
+
+@keyframes ob-fadeSlide {
+    from { opacity: 0; transform: translateX(1rem); }
+    to   { opacity: 1; transform: translateX(0); }
+}
+
+/* ── Step: Welcome ── */
+.ob-step { display: flex; flex-direction: column; gap: 0.8rem; }
+
+.ob-step h2 {
+    font-size: 1.5rem;
+    font-weight: 800;
+    color: white;
+    margin: 0;
+    line-height: 1.2;
+}
+
+.ob-step p {
+    color: #94a3b8;
+    font-size: 0.9rem;
+    line-height: 1.6;
+    margin: 0;
+}
+
+.ob-welcome-emoji {
+    font-size: 3rem;
+    line-height: 1;
+}
+
+.ob-checklist {
+    list-style: none;
+    padding: 0;
+    margin: 0.4rem 0 0 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.ob-checklist li {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    font-size: 0.88rem;
+    color: #cbd5e1;
+}
+
+.ob-checklist li svg {
+    color: #AEFF00;
+    flex-shrink: 0;
+}
+
+/* ── Step: Budget ── */
+.ob-currency-row {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.ob-currency-btn {
+    padding: 0.35rem 0.9rem;
+    border-radius: 2rem;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: transparent;
+    color: #64748b;
+    font-size: 0.82rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.ob-currency-btn--active {
+    border-color: #AEFF00;
+    color: #AEFF00;
+    background: rgba(174, 255, 0, 0.08);
+}
+
+.ob-amount-wrap {
+    display: flex;
+    align-items: center;
+    background: rgba(30, 41, 59, 0.7);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 1rem;
+    padding: 0.4rem 1rem;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.ob-amount-wrap:focus-within {
+    border-color: #AEFF00;
+    box-shadow: 0 0 1rem rgba(174, 255, 0, 0.12);
+}
+
+.ob-currency-symbol {
+    font-size: 1.6rem;
+    font-weight: 700;
+    color: #AEFF00;
+    margin-right: 0.3rem;
+    user-select: none;
+}
+
+.ob-amount-input {
+    flex: 1;
+    background: transparent;
+    border: none;
+    outline: none;
+    color: white;
+    font-size: 2.2rem;
+    font-weight: 800;
+    width: 100%;
+    min-width: 0;
+}
+
+.ob-amount-input::placeholder { color: #334155; }
+
+/* Remove arrows */
+.ob-amount-input::-webkit-outer-spin-button,
+.ob-amount-input::-webkit-inner-spin-button { -webkit-appearance: none; }
+.ob-amount-input[type=number] { appearance: textfield; }
+
+.ob-currency-tag {
+    font-size: 0.85rem;
+    color: #475569;
+    font-weight: 600;
+    margin-left: 0.5rem;
+    white-space: nowrap;
+}
+
+.ob-presets {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.ob-preset-btn {
+    padding: 0.35rem 0.8rem;
+    border-radius: 0.6rem;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    background: rgba(30, 41, 59, 0.5);
+    color: #94a3b8;
+    font-size: 0.82rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.ob-preset-btn:hover {
+    border-color: rgba(174, 255, 0, 0.3);
+    color: #AEFF00;
+    background: rgba(174, 255, 0, 0.06);
+}
+
+/* ── Step: Categories ── */
+.ob-cat-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.6rem;
+}
+
+.ob-cat-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.85rem 0.4rem 0.7rem;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 0.9rem;
+    background: rgba(30, 41, 59, 0.4);
+    color: #64748b;
+    font-size: 0.75rem;
+    cursor: pointer;
+    position: relative;
+    transition: all 0.2s ease;
+}
+
+.ob-cat-icon {
+    font-size: 1.3rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.ob-cat-btn:hover {
+    border-color: var(--cat-color);
+    color: var(--cat-color);
+    background: color-mix(in srgb, var(--cat-color) 6%, transparent);
+}
+
+.ob-cat-btn--active {
+    border-color: var(--cat-color) !important;
+    color: var(--cat-color) !important;
+    background: color-mix(in srgb, var(--cat-color) 10%, transparent) !important;
+    box-shadow: 0 0 0.8rem color-mix(in srgb, var(--cat-color) 15%, transparent);
+}
+
+.ob-cat-check {
+    position: absolute;
+    top: 0.4rem;
+    right: 0.4rem;
+    font-size: 0.7rem;
+    color: var(--cat-color);
+}
+
+/* ── Step: Done ── */
+.ob-step--done {
+    align-items: center;
+    text-align: center;
+    padding: 1rem 0;
+}
+
+.ob-done-circle {
+    width: 5rem;
+    height: 5rem;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #AEFF00, #0ECD00);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2rem;
+    color: #020617;
+    animation: ob-pop 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+    margin-bottom: 0.5rem;
+}
+
+@keyframes ob-pop {
+    from { transform: scale(0); opacity: 0; }
+    to   { transform: scale(1); opacity: 1; }
+}
+
+/* ── Error ── */
+.ob-error {
+    font-size: 0.84rem;
+    color: #ef4444;
+    background: rgba(239, 68, 68, 0.1);
+    border: 1px solid rgba(239, 68, 68, 0.2);
+    border-radius: 0.6rem;
+    padding: 0.6rem 0.9rem;
+    margin: 0;
+}
+
+/* ── Navigation ── */
+.ob-nav {
+    display: flex;
+    gap: 0.75rem;
+    margin-top: 0.4rem;
+}
+
+.ob-btn-ghost {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    background: transparent;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: #94a3b8;
+    padding: 0.7rem 1.1rem;
+    border-radius: 0.85rem;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.ob-btn-ghost:hover {
+    background: rgba(255, 255, 255, 0.05);
+    color: white;
+}
+
+.ob-btn-primary {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    background: linear-gradient(135deg, #AEFF00, #0ECD00);
+    color: #020617;
+    border: none;
+    padding: 0.75rem 1.5rem;
+    border-radius: 0.85rem;
+    font-size: 0.95rem;
+    font-weight: 800;
+    cursor: pointer;
+    transition: all 0.25s ease;
+}
+
+.ob-btn-primary:hover:not(:disabled) {
+    opacity: 0.88;
+    transform: translateY(-1px);
+    box-shadow: 0 6px 20px rgba(174, 255, 0, 0.3);
+}
+
+.ob-btn-primary:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.ob-btn--done {
+    background: linear-gradient(135deg, #22d3ee, #0284c7);
+}
+
+.ob-skip {
+    background: none;
+    border: none;
+    color: #334155;
+    font-size: 0.8rem;
+    cursor: pointer;
+    text-align: center;
+    transition: color 0.2s;
+    padding: 0.2rem;
+    margin-top: -0.4rem;
+}
+
+.ob-skip:hover { color: #64748b; }
+
+/* ── Responsive ── */
+@media (max-width: 480px) {
+    .ob-card { padding: 1.8rem 1.4rem 1.4rem; border-radius: 1.2rem; }
+    .ob-cat-grid { grid-template-columns: repeat(3, 1fr); }
+    .ob-amount-input { font-size: 1.8rem; }
+}
+/* Restringimos el tamaño de la tarjeta del onboarding cuando es modal */
+.modal-content-onboarding {
+    position: relative;
+    z-index: 10000;
+    max-height: 90vh;
+    overflow-y: auto;
+    /* La sombra extra para destacarlo del fondo borroso */
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5); 
+}

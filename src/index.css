@@ -1,10 +1,51 @@
-html,
-body,
-#root {
-    height: 100vh;
-    width: 100vw;
+/* ── Reset: single scroll source on the body only ── */
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
     margin: 0;
     padding: 0;
-    overflow: hidden;
+}
+
+html {
+    height: 100%;
+    overflow: hidden; /* no scroll on html itself */
+}
+
+body {
+    height: 100%;
+    overflow-y: scroll; /* ONE scroll, always on body */
+    overflow-x: hidden;
     background-color: #020617;
+    color: white;
+    font-family: system-ui, sans-serif;
+
+    /* Dark, themed scrollbar (Webkit) */
+    scrollbar-width: thin;
+    scrollbar-color: #1e3a1e #0a0f1e;
+}
+
+/* Webkit scrollbar styling (Chrome, Edge, Safari) */
+body::-webkit-scrollbar {
+    width: 8px;
+}
+
+body::-webkit-scrollbar-track {
+    background: #0a0f1e;
+}
+
+body::-webkit-scrollbar-thumb {
+    background: #1e3a1e;
+    border-radius: 99px;
+    border: 2px solid #0a0f1e;
+}
+
+body::-webkit-scrollbar-thumb:hover {
+    background: #2d5a2d;
+}
+
+#root {
+    min-height: 100%;
+    display: flex;
+    flex-direction: column;
 }

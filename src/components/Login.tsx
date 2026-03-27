@@ -4,7 +4,8 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { loginSchema, type LoginSchema } from '../models/Auth.Schema';
 import './Register.css';
 import { useNavigate } from 'react-router-dom'; 
-import { authService } from '../api/Service'; 
+import { authService } from '../api/Service';
+import toast from 'react-hot-toast';
 
 const Login = () => {
     const navigate = useNavigate();
@@ -18,28 +19,44 @@ const Login = () => {
         resolver: zodResolver(loginSchema),
         mode: "onBlur"
     });
-    const onSubmit = async (data: LoginSchema) => {
-        try {
-            console.log("Intentando iniciar sesión...");
-            await authService.login(data);
-            
-            console.log("Login exitoso.");
-            navigate('/dashboard'); 
-        } catch (error: unknown) {
-            console.error("Error en el login:", error);
-            const axiosError = error as { response?: { data?: { detail?: string; message?: string } } };
-            const errorMessage = 
-                axiosError.response?.data?.detail || 
-                axiosError.response?.data?.message || 
-                "Correo o contraseña incorrectos";
 
-            alert(errorMessage);
+    const onSubmit = async (data: LoginSchema) => {
+        const loadingToast = toast.loading("Iniciando sesión...");
+        
+        try {
+            // El backend debe responder seteando la Cookie HTTP-Only automáticamente
+            const response = await authService.login(data);
+
+            // 1. GUARDAMOS SOLO UNA BANDERA Y DATOS DE UI (NADA DE TOKENS)
+            localStorage.setItem('isAuthenticated', 'true');
+            
+            if (response.user_name) {
+                localStorage.setItem('user_name', response.user_name);
+            }
+
+            toast.dismiss(loadingToast);
+            toast.success("¡Bienvenido de vuelta!");
+
+            // 2. VAMOS DIRECTO AL DASHBOARD (El modal de onboarding se manejará allí)
+            navigate('/dashboard/home', { replace: true });
+
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        } catch (error: any) {
+            toast.dismiss(loadingToast);
+            console.error("Error en el login:", error);
+            
+            const errorMessage =
+                error.response?.data?.detail ||
+                error.response?.data?.message ||
+                "Correo o contraseña incorrectos";
+            
+            toast.error(errorMessage);
         }
     };
 
     return (
         <div className="register-container">
-            <button className="back-button" onClick={() => navigate('/')}>
+            <button className="back-button" onClick={() => navigate('/landing')}>
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                     <path d="M19 12H5M12 19l-7-7 7-7" />
                 </svg>
@@ -85,8 +102,7 @@ const Login = () => {
                         {errors.password && <span className="error-text">{errors.password.message}</span>}
                     </div>
 
-                    {/* Asegúrate de que la clase CSS sea consistente */}
-                    <button type="submit" className="submit-button">Ingresar</button>
+                    <button type="submit" className="btn-submit">Ingresar</button>
                 </form>
             </div>
         </div>
