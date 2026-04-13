@@ -3,7 +3,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { loginSchema, type LoginSchema } from '../models/Auth.Schema';
 import './Register.css';
-import { useNavigate } from 'react-router-dom'; 
+import { useNavigate } from 'react-router-dom';
 import { authService } from '../api/Service';
 import toast from 'react-hot-toast';
 
@@ -22,34 +22,21 @@ const Login = () => {
 
     const onSubmit = async (data: LoginSchema) => {
         const loadingToast = toast.loading("Iniciando sesión...");
-        
-        try {
-            // El backend debe responder seteando la Cookie HTTP-Only automáticamente
-            const response = await authService.login(data);
 
-            // 1. GUARDAMOS SOLO UNA BANDERA Y DATOS DE UI (NADA DE TOKENS)
-            localStorage.setItem('isAuthenticated', 'true');
-            
-            if (response.user_name) {
-                localStorage.setItem('user_name', response.user_name);
-            }
+        try {
+            await authService.login(data);
 
             toast.dismiss(loadingToast);
             toast.success("¡Bienvenido de vuelta!");
-
-            // 2. VAMOS DIRECTO AL DASHBOARD (El modal de onboarding se manejará allí)
             navigate('/dashboard/home', { replace: true });
 
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         } catch (error: any) {
             toast.dismiss(loadingToast);
-            console.error("Error en el login:", error);
-            
             const errorMessage =
-                error.response?.data?.detail ||
                 error.response?.data?.message ||
+                error.response?.data?.detail ||
                 "Correo o contraseña incorrectos";
-            
             toast.error(errorMessage);
         }
     };

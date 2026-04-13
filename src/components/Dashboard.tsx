@@ -5,32 +5,39 @@ import './Dashboard.css';
 import FinanceCharts from './FinanceCharts';
 import AddTransactionModal from './AddTransactionModal';
 import OnboardingModal from './OnboardingModal';
-import { authService, DashboardService, type DashboardResponse } from '../api/Service';
+import {
+    authService,
+    TransactionService,
+    type MeResponse,
+    type TransactionSummary,
+} from '../api/Service';
 
 const Dashboard = () => {
-    const navigate = useNavigate();
-    const menuRef  = useRef<HTMLDivElement>(null);
+    const navigate  = useNavigate();
+    const menuRef   = useRef<HTMLDivElement>(null);
 
     const [loading, setLoading]           = useState(true);
     const [error, setError]               = useState('');
-    const [dashboard, setDashboard]       = useState<DashboardResponse | null>(null);
+    const [me, setMe]                     = useState<MeResponse | null>(null);
+    const [summary, setSummary]           = useState<TransactionSummary | null>(null);
     const [showUserMenu, setShowUserMenu] = useState(false);
-    
-    // --- ESTADOS PARA LOS MODALES ---
-    const [isAddModalOpen, setIsAddModalOpen] = useState(false);
-    // ¡OJO AQUÍ! Lo dejé en true para que puedas probar el Onboarding inmediatamente.
-    // Cuando termines de probar, cámbialo a useState(false)
-    const [isOnboardingOpen, setIsOnboardingOpen] = useState(true); 
+    const [isAddModalOpen, setIsAddModalOpen]   = useState(false);
+    const [isOnboardingOpen, setIsOnboardingOpen] = useState(false);
 
     const load = useCallback(async () => {
         try {
-            const data = await DashboardService.getHome();
-            setDashboard(data);
+            const [meData, summaryData] = await Promise.all([
+                authService.me(),
+                TransactionService.getSummary(),
+            ]);
+            setMe(meData);
+            setSummary(summaryData);
             setError('');
-            
-            // Lógica futura: Si el backend nos dice que es usuario nuevo, abrimos el onboarding
-            // if (data.user_info.is_new_user) setIsOnboardingOpen(true);
 
+            // Abrir onboarding si el usuario no lo ha completado
+            if (!meData.onboardingCompleted && !localStorage.getItem('onboarding_done')) {
+                setIsOnboardingOpen(true);
+            }
         } catch {
             setError('No se pudo cargar el dashboard. Intenta de nuevo.');
         } finally {
@@ -52,7 +59,6 @@ const Dashboard = () => {
         return () => document.removeEventListener('mousedown', handler);
     }, []);
 
-    // Se llama desde FinanceCharts o desde los modales cuando se guarda algo exitosamente
     const handleRefresh = useCallback(() => {
         setLoading(true);
         load();
@@ -78,16 +84,16 @@ const Dashboard = () => {
                             onClick={() => setShowUserMenu(!showUserMenu)}
                         >
                             <div className="user-avatar"><FiUser /></div>
-                            <span className="user-name">{dashboard?.user_info?.name || 'Usuario'}</span>
+                            <span className="user-name">{me?.name || 'Usuario'}</span>
                             <FiChevronDown className={`chevron ${showUserMenu ? 'rotate' : ''}`} />
                         </button>
                         {showUserMenu && (
                             <div className="user-dropdown">
                                 <div className="dropdown-header">
                                     <p>Conectado como</p>
-                                    <h4>{dashboard?.user_info?.name || '—'}</h4>
+                                    <h4>{me?.name || '—'}</h4>
                                     <small style={{ color: '#475569', fontSize: '0.78rem' }}>
-                                        {dashboard?.user_info?.email}
+                                        {me?.email}
                                     </small>
                                 </div>
                                 <ul className="dropdown-list">
@@ -120,47 +126,41 @@ const Dashboard = () => {
                         <button onClick={handleRefresh}>Reintentar</button>
                     </div>
                 )}
-                {!loading && !error && dashboard && (
+                {!loading && !error && me && summary && (
                     <div className="welcome-card">
                         <h1>Panel Principal</h1>
-                        <p className="subtitle">
-                            Bienvenido, {dashboard.user_info.name} · Miembro desde {dashboard.user_info.created_at}
-                        </p>
-                        <FinanceCharts summary={dashboard.summary} onRefresh={handleRefresh} />
+                        <p className="subtitle">Bienvenido, {me.name}</p>
+                        <FinanceCharts summary={summary} onRefresh={handleRefresh} />
                     </div>
                 )}
             </main>
 
-            {/* --- BOTÓN FLOTANTE PARA AGREGAR TRANSACCIÓN --- */}
-            <button 
-                className="fab-add-button" 
+            <button
+                className="fab-add-button"
                 onClick={() => setIsAddModalOpen(true)}
                 title="Agregar nuevo registro"
             >
                 <FiPlus />
             </button>
 
-            {/* --- COMPONENTE MODAL DE TRANSACCIÓN --- */}
-            <AddTransactionModal 
-                isOpen={isAddModalOpen} 
-                onClose={() => setIsAddModalOpen(false)} 
+            <AddTransactionModal
+                isOpen={isAddModalOpen}
+                onClose={() => setIsAddModalOpen(false)}
                 onSuccess={() => {
                     setIsAddModalOpen(false);
-                    handleRefresh(); // Refresca las gráficas del dashboard automáticamente
-                }} 
-            />
-            
-            {/* --- COMPONENTE MODAL DE ONBOARDING --- */}
-            <OnboardingModal 
-                isOpen={isOnboardingOpen} 
-                onClose={() => setIsOnboardingOpen(false)} 
-                onSuccess={() => {
-                    setIsOnboardingOpen(false); 
-                    handleRefresh(); 
+                    handleRefresh();
                 }}
-                userName={dashboard?.user_info?.name || 'Usuario'} 
             />
 
+            <OnboardingModal
+                isOpen={isOnboardingOpen}
+                onClose={() => setIsOnboardingOpen(false)}
+                onSuccess={() => {
+                    setIsOnboardingOpen(false);
+                    handleRefresh();
+                }}
+                userName={me?.name || 'Usuario'}
+            />
         </div>
     );
 };

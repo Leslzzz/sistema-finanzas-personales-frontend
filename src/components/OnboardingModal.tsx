@@ -5,7 +5,8 @@ import {
     FiShoppingCart, FiTruck, FiMonitor, FiHeart,
     FiZap, FiMoreHorizontal, FiCoffee, FiHome, FiBook
 } from 'react-icons/fi';
-import './Onboarding.css'; // Mantenemos el mismo archivo CSS (solo le agregaremos el overlay más abajo)
+import './Onboarding.css';
+import { OnboardingService } from '../api/Service';
 
 // ─── Config ───────────────────────────────────────────────────────────────────
 
@@ -18,14 +19,14 @@ const ALL_CATEGORIES = [
     { id: 'Entretenimiento', label: 'Entretenimiento', icon: FiMonitor,        color: '#22d3ee' },
     { id: 'Salud',           label: 'Salud',           icon: FiHeart,          color: '#a78bfa' },
     { id: 'Servicios',       label: 'Servicios',       icon: FiZap,            color: '#f472b6' },
-    { id: 'Hogar',           label: 'Hogar',           icon: FiHome,           color: '#fbbf24' },
-    { id: 'Educación',       label: 'Educación',       icon: FiBook,           color: '#60a5fa' },
-    { id: 'Otros',           label: 'Otros',           icon: FiMoreHorizontal, color: '#64748b' },
+    { id: 'Vivienda',        label: 'Vivienda',        icon: FiHome,           color: '#60a5fa' },
+    { id: 'Educación',       label: 'Educación',       icon: FiBook,           color: '#38bdf8' },
+    { id: 'Otros',           label: 'Otros',           icon: FiMoreHorizontal, color: '#94a3b8' },
 ];
 
 const STEPS = ['Bienvenida', 'Presupuesto', 'Categorías', 'Listo'];
 
-// ─── Interfaz y Props ────────────────────────────────────────────────────────
+// ─── Props ────────────────────────────────────────────────────────────────────
 
 interface OnboardingModalProps {
     isOpen: boolean;
@@ -34,7 +35,7 @@ interface OnboardingModalProps {
     userName: string;
 }
 
-// ─── Step components (Se mantienen igual, sin cambios de lógica) ─────────────
+// ─── Step components ──────────────────────────────────────────────────────────
 
 const StepWelcome = ({ nombre }: { nombre: string }) => (
     <div className="ob-step ob-step--welcome">
@@ -52,8 +53,8 @@ const StepWelcome = ({ nombre }: { nombre: string }) => (
 
 const StepBudget = ({ budget, setBudget, currency, setCurrency }: any) => (
     <div className="ob-step">
-        <h2>¿Cuál es tu presupuesto mensual?</h2>
-        <p>Este será el límite por defecto para cada categoría. Puedes ajustarlo después.</p>
+        <h2>¿Cuál es tu ingreso mensual?</h2>
+        <p>Úsalo como referencia para tus presupuestos. Puedes ajustar cada categoría después.</p>
         <div className="ob-currency-row">
             {CURRENCIES.map(c => (
                 <button
@@ -91,7 +92,7 @@ const StepCategories = ({ selected, toggle }: any) => (
         <p>Selecciona las categorías que quieres rastrear. Mínimo 1.</p>
         <div className="ob-cat-grid">
             {ALL_CATEGORIES.map(cat => {
-                const Icon = cat.icon;
+                const Icon   = cat.icon;
                 const active = selected.includes(cat.id);
                 return (
                     <button
@@ -121,19 +122,19 @@ const StepDone = () => (
 // ─── Main Component ───────────────────────────────────────────────────────────
 
 const OnboardingModal = ({ isOpen, onClose, onSuccess, userName }: OnboardingModalProps) => {
-    const [step, setStep]               = useState(0);
-    const [budget, setBudget]           = useState('');
-    const [currency, setCurrency]       = useState('MXN');
-    const [categories, setCategories]   = useState<string[]>(['Alimentación', 'Transporte']);
-    const [loading, setLoading]         = useState(false);
-    const [error, setError]             = useState('');
+    const [step, setStep]             = useState(0);
+    const [budget, setBudget]         = useState('');
+    const [currency, setCurrency]     = useState('MXN');
+    const [categories, setCategories] = useState<string[]>(['Alimentación', 'Transporte']);
+    const [loading, setLoading]       = useState(false);
+    const [error, setError]           = useState('');
 
-    // Resetear el modal si se abre de nuevo (aunque lo ideal es que solo se abra una vez en la vida del usuario)
     useEffect(() => {
         if (isOpen) {
             setStep(0);
             setBudget('');
             setCategories(['Alimentación', 'Transporte']);
+            setError('');
         }
     }, [isOpen]);
 
@@ -161,25 +162,21 @@ const OnboardingModal = ({ isOpen, onClose, onSuccess, userName }: OnboardingMod
         setError('');
 
         try {
-            // Simulamos o hacemos la llamada a tu API
-            /*
-            const budgetPerCategory = Math.round(Number(budget) / categories.length);
-            await Promise.all(
-                categories.map(name =>
-                    api.post('/api/categories/', { name, budget: budgetPerCategory })
-                )
-            );
-            */
-           
-            // Simulamos guardado exitoso
-            await new Promise(r => setTimeout(r, 1000));
-            
-            // Si el backend es quien maneja si el usuario es nuevo o no,
-            // quizás aquí llamemos a un endpoint tipo PATCH /api/users/me/ {is_new_user: false}
-            
-            setStep(STEPS.length - 1); 
+            const monthlyIncome = Number(budget);
+            // Distribuir el ingreso equitativamente entre las categorías seleccionadas
+            const budgetPerCategory = Math.round(monthlyIncome / categories.length);
+
+            await OnboardingService.complete({
+                monthlyIncome,
+                categories: categories.map(label => ({
+                    label,
+                    budgetLimit: budgetPerCategory,
+                })),
+            });
+
+            setStep(STEPS.length - 1);
         } catch (err: any) {
-            setError(err?.response?.data?.detail || 'Ocurrió un error al guardar las categorías.');
+            setError(err?.response?.data?.message || err?.response?.data?.detail || 'Ocurrió un error al guardar la configuración.');
         } finally {
             setLoading(false);
         }
@@ -189,17 +186,14 @@ const OnboardingModal = ({ isOpen, onClose, onSuccess, userName }: OnboardingMod
     const isDoneStep = step === STEPS.length - 1;
 
     return (
-        // Contenedor overlay oscuro igual al de AddTransaction
         <div className="modal-overlay">
-            {/* Detenemos propagación para que no se cierre haciendo clic dentro */}
             <div className="ob-card modal-content-onboarding" onClick={e => e.stopPropagation()}>
-                
+
                 <div className="ob-glow ob-glow--tr" />
                 <div className="ob-glow ob-glow--bl" />
 
                 <div className="ob-logo">Finanzly</div>
 
-                {/* Progress dots */}
                 {!isDoneStep && (
                     <div className="ob-progress">
                         {STEPS.slice(0, -1).map((_, i) => (
@@ -242,20 +236,18 @@ const OnboardingModal = ({ isOpen, onClose, onSuccess, userName }: OnboardingMod
                     ) : (
                         <button
                             className="ob-btn-primary ob-btn--done"
-                            onClick={() => onSuccess()} // Al terminar, llama a onSuccess
+                            onClick={() => onSuccess()}
                         >
                             Ir al Dashboard <FiArrowRight />
                         </button>
                     )}
                 </div>
 
-                {/* Botón para omitir */}
                 {step === 0 && (
                     <button className="ob-skip" onClick={() => onClose()}>
                         Omitir por ahora
                     </button>
                 )}
-
             </div>
         </div>
     );

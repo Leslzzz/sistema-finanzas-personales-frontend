@@ -1,14 +1,16 @@
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { registerSchema, type RegisterSchema } from '../models/Auth.Schema'; 
+import { registerSchema, type RegisterSchema } from '../models/Auth.Schema';
 import './Register.css';
 import { useNavigate } from 'react-router-dom';
-import { authService } from '../api/Service'; 
+import { authService } from '../api/Service';
+import toast from 'react-hot-toast';
 
 const Register = () => {
     const navigate = useNavigate();
     const [showPassword, setShowPassword] = useState(false);
+
     const {
         register,
         handleSubmit,
@@ -19,34 +21,27 @@ const Register = () => {
     });
 
     const onSubmit = async (data: RegisterSchema) => {
+        const loadingToast = toast.loading("Creando cuenta...");
+
         try {
-            console.log("Enviando datos a Railway...", data);
-            await authService.register(data); 
-            
-            alert("¡Cuenta creada exitosamente en Railway!");
-            navigate('/landing'); 
+            await authService.register(data);
+
+            toast.dismiss(loadingToast);
+            toast.success("¡Cuenta creada! Bienvenido.");
+            // El register ya guarda el token, vamos directo al dashboard
+            navigate('/dashboard/home', { replace: true });
+
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         } catch (error: any) {
-    console.error("Error completo:", error);
-
-    const errores = error.response?.data;
-    let mensajeFinal = "Error al crear la cuenta";
-
-    if (errores) {
-        if (errores.email) {
-            mensajeFinal = "Email: " + errores.email[0];
-        } else if (errores.password) {
-            mensajeFinal = "Password: " + errores.password[0];
-        } else if (errores.name) {
-            mensajeFinal = "Name: " + errores.name[0];
-        } else if (errores.detail) {
-            mensajeFinal = errores.detail;
-        }
-    } else if (error.request) {
-        mensajeFinal = "El servidor de Railway no responde. ¿Está encendido?";
-    }
-
-    alert(mensajeFinal);
+            toast.dismiss(loadingToast);
+            const message =
+                error.response?.data?.message ||
+                error.response?.data?.detail ||
+                error.response?.data?.email?.[0] ||
+                error.response?.data?.password?.[0] ||
+                error.response?.data?.name?.[0] ||
+                "Error al crear la cuenta";
+            toast.error(message);
         }
     };
 
@@ -74,7 +69,7 @@ const Register = () => {
                         <input
                             type="text"
                             placeholder="Tu Nombre"
-                            {...register("name")} 
+                            {...register("name")}
                         />
                         {errors.name && <span className="error-text">{errors.name.message}</span>}
                     </div>
@@ -84,7 +79,7 @@ const Register = () => {
                         <input
                             type="email"
                             placeholder="ejemplo@correo.com"
-                            {...register("email")} 
+                            {...register("email")}
                         />
                         {errors.email && <span className="error-text">{errors.email.message}</span>}
                     </div>

@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import {
     PieChart, Pie, Cell, Tooltip, ResponsiveContainer,
     BarChart, Bar, XAxis, YAxis, CartesianGrid,
@@ -7,48 +7,26 @@ import {
 import {
     FiDownload, FiUpload, FiTrendingUp, FiTrendingDown,
     FiDollarSign, FiX, FiArrowUpRight, FiArrowDownRight, FiPlus,
-    FiShoppingCart, FiCoffee, FiTruck, FiMonitor, FiHeart,
-    FiZap, FiHome, FiBook, FiMoreHorizontal, FiFileText, FiCalendar, FiTag, FiCheck
+    FiCheck, FiFileText, FiCalendar, FiTag,
 } from 'react-icons/fi';
 import './FinanceCharts.css';
-import type { DashboardSummary, Category, Transaction } from '../api/Service';
-import { CategoryService, TransactionService } from '../api/Service';
+import type { TransactionSummary, Transaction, CategoryDistribution } from '../api/Service';
+import { TransactionService, PREDEFINED_CATEGORIES } from '../api/Service';
+import toast from 'react-hot-toast';
 
-// ─── Constantes ───────────────────────────────────────────────────────────────
+// ─── Tipos ────────────────────────────────────────────────────────────────────
 
-// Paleta de colores por nombre de categoría
-const CATEGORY_COLORS: Record<string, string> = {
-    'Alimentación': '#AEFF00',
-    'Café':         '#fb923c',
-    'Transporte':   '#0ECD00',
-    'Entretenimiento': '#22d3ee',
-    'Salud':        '#a78bfa',
-    'Servicios':    '#f472b6',
-    'Hogar':        '#fbbf24',
-    'Educación':    '#60a5fa',
-    'Otros':        '#64748b',
-};
+type TabType = 'gasto' | 'ingreso';
 
-const CATEGORY_ICONS: Record<string, any> = {
-    'Alimentación': FiShoppingCart,
-    'Café':         FiCoffee,
-    'Transporte':   FiTruck,
-    'Entretenimiento': FiMonitor,
-    'Salud':        FiHeart,
-    'Servicios':    FiZap,
-    'Hogar':        FiHome,
-    'Educación':    FiBook,
-    'Otros':        FiMoreHorizontal,
-};
+// ─── Mock historial mensual ────────────────────────────────────────────────────
 
-// Mock solo para historial mensual — pendiente endpoint del backend
 const MONTHLY_MOCK = [
-    { mes: 'Ago', gasto: 0, ingreso: 0 },
-    { mes: 'Sep', gasto: 0, ingreso: 0 },
-    { mes: 'Oct', gasto: 0, ingreso: 0 },
     { mes: 'Nov', gasto: 0, ingreso: 0 },
     { mes: 'Dic', gasto: 0, ingreso: 0 },
     { mes: 'Ene', gasto: 0, ingreso: 0 },
+    { mes: 'Feb', gasto: 0, ingreso: 0 },
+    { mes: 'Mar', gasto: 0, ingreso: 0 },
+    { mes: 'Abr', gasto: 0, ingreso: 0 },
 ];
 
 // ─── Tooltips ─────────────────────────────────────────────────────────────────
@@ -58,7 +36,7 @@ const CustomPieTooltip = ({ active, payload }: any) => {
         return (
             <div className="fc-tooltip">
                 <p className="fc-tooltip-label">{payload[0].name}</p>
-                <p className="fc-tooltip-value">${Number(payload[0].value).toLocaleString()}</p>
+                <p className="fc-tooltip-value">{payload[0].value}%</p>
             </div>
         );
     }
@@ -83,27 +61,24 @@ const CustomBarTooltip = ({ active, payload, label }: any) => {
 
 // ─── Modal: Agregar Transacción ───────────────────────────────────────────────
 
-type TabType = 'gasto' | 'ingreso';
-
 interface AddTransactionModalProps {
     defaultTab: TabType;
-    categories: Category[];
     onClose: () => void;
-    onSuccess: () => void;   // refresca datos del dashboard al guardar
+    onSuccess: () => void;
 }
 
-const AddTransactionModal = ({ defaultTab, categories, onClose, onSuccess }: AddTransactionModalProps) => {
-    const [tab, setTab]               = useState<TabType>(defaultTab);
-    const [amount, setAmount]         = useState('');
-    const [description, setDesc]      = useState('');
-    const [categoryId, setCategoryId] = useState<number | ''>('');
-    const [date, setDate]             = useState(new Date().toISOString().split('T')[0]);
-    const [loading, setLoading]       = useState(false);
-    const [error, setError]           = useState('');
-    const [saved, setSaved]           = useState(false);
+const AddTransactionModal = ({ defaultTab, onClose, onSuccess }: AddTransactionModalProps) => {
+    const [tab, setTab]           = useState<TabType>(defaultTab);
+    const [amount, setAmount]     = useState('');
+    const [desc, setDesc]         = useState('');
+    const [category, setCategory] = useState('');
+    const [date, setDate]         = useState(new Date().toISOString().split('T')[0]);
+    const [loading, setLoading]   = useState(false);
+    const [error, setError]       = useState('');
+    const [saved, setSaved]       = useState(false);
 
-    const isValid = !!amount && Number(amount) > 0 && !!description &&
-                    (tab === 'ingreso' || categoryId !== '');
+    const isValid = !!amount && Number(amount) > 0 && !!desc &&
+                    (tab === 'ingreso' || !!category);
 
     const handleSave = async () => {
         if (!isValid) return;
@@ -111,26 +86,21 @@ const AddTransactionModal = ({ defaultTab, categories, onClose, onSuccess }: Add
         setError('');
 
         try {
-            // El backend espera description, category (id), y los detalles
-            // de income o outcome según el tipo.
-            // ⚠️  Tu compañero debe confirmar la estructura exacta del serializer.
             await TransactionService.create({
-                description,
-                category: tab === 'gasto' ? Number(categoryId) : Number(categories[0]?.id ?? 1),
-                ...(tab === 'gasto'
-                    ? { outcome_details: { expense: amount } }
-                    : { income_details: { amount } }
-                ),
+                desc,
+                amount: Number(amount),
+                type: tab,
+                category: tab === 'ingreso' ? 'Otros' : category,
+                date,
             });
-
             setSaved(true);
             setTimeout(() => {
-                onSuccess();   // refresca el dashboard
+                onSuccess();
                 onClose();
             }, 900);
         } catch (err: any) {
-            const detail = err?.response?.data?.detail
-                ?? Object.values(err?.response?.data ?? {})?.[0]
+            const detail = err?.response?.data?.message
+                ?? err?.response?.data?.detail
                 ?? 'Error al guardar. Intenta de nuevo.';
             setError(String(detail));
         } finally {
@@ -142,15 +112,12 @@ const AddTransactionModal = ({ defaultTab, categories, onClose, onSuccess }: Add
         <div className="fc-modal-overlay" onClick={onClose}>
             <div className="fc-modal fc-modal--add" onClick={e => e.stopPropagation()}>
 
-                {/* Header */}
                 <div className="fc-modal-header">
                     <h3>Nueva Transacción</h3>
                     <button className="fc-modal-close" onClick={onClose}><FiX /></button>
                 </div>
 
                 <div className="fc-modal-body">
-
-                    {/* Tabs */}
                     <div className="fc-add-tabs">
                         {(['gasto', 'ingreso'] as TabType[]).map(t => (
                             <button
@@ -163,7 +130,6 @@ const AddTransactionModal = ({ defaultTab, categories, onClose, onSuccess }: Add
                         ))}
                     </div>
 
-                    {/* Monto */}
                     <div className="fc-add-field">
                         <label>Monto</label>
                         <div className="fc-add-amount-wrap">
@@ -179,19 +145,17 @@ const AddTransactionModal = ({ defaultTab, categories, onClose, onSuccess }: Add
                         </div>
                     </div>
 
-                    {/* Descripción */}
                     <div className="fc-add-field">
                         <label><FiFileText /> Descripción</label>
                         <input
                             type="text"
                             placeholder={tab === 'gasto' ? 'Ej. Supermercado, Netflix…' : 'Ej. Salario, Freelance…'}
-                            value={description}
+                            value={desc}
                             onChange={e => setDesc(e.target.value)}
                             className="fc-add-input"
                         />
                     </div>
 
-                    {/* Fecha */}
                     <div className="fc-add-field">
                         <label><FiCalendar /> Fecha</label>
                         <input
@@ -202,38 +166,28 @@ const AddTransactionModal = ({ defaultTab, categories, onClose, onSuccess }: Add
                         />
                     </div>
 
-                    {/* Categoría (solo gastos) */}
                     {tab === 'gasto' && (
                         <div className="fc-add-field">
                             <label><FiTag /> Categoría</label>
-                            {categories.length === 0 ? (
-                                <p className="fc-add-hint">No tienes categorías aún. Completa el onboarding.</p>
-                            ) : (
-                                <div className="fc-add-categories">
-                                    {categories.map(cat => {
-                                        const Icon = CATEGORY_ICONS[cat.name] ?? FiMoreHorizontal;
-                                        const color = CATEGORY_COLORS[cat.name] ?? '#64748b';
-                                        return (
-                                            <button
-                                                key={cat.id}
-                                                className={`fc-add-cat-btn ${categoryId === cat.id ? 'fc-add-cat-btn--active' : ''}`}
-                                                style={{ '--cat-color': color } as any}
-                                                onClick={() => setCategoryId(cat.id)}
-                                            >
-                                                <Icon />
-                                                <span>{cat.name}</span>
-                                            </button>
-                                        );
-                                    })}
-                                </div>
-                            )}
+                            <div className="fc-add-categories">
+                                {PREDEFINED_CATEGORIES.map(cat => (
+                                    <button
+                                        key={cat.label}
+                                        className={`fc-add-cat-btn ${category === cat.label ? 'fc-add-cat-btn--active' : ''}`}
+                                        style={{ '--cat-color': cat.color } as any}
+                                        onClick={() => setCategory(cat.label)}
+                                    >
+                                        <span>{cat.icon}</span>
+                                        <span>{cat.label}</span>
+                                    </button>
+                                ))}
+                            </div>
                         </div>
                     )}
 
                     {error && <p className="fc-add-error">{error}</p>}
                 </div>
 
-                {/* Footer */}
                 <div className="fc-modal-footer">
                     <button className="fc-btn-ghost" onClick={onClose}>Cancelar</button>
                     <button
@@ -251,68 +205,117 @@ const AddTransactionModal = ({ defaultTab, categories, onClose, onSuccess }: Add
 
 // ─── Modal: Importar ──────────────────────────────────────────────────────────
 
-const ImportModal = ({ onClose }: { onClose: () => void }) => (
-    <div className="fc-modal-overlay" onClick={onClose}>
-        <div className="fc-modal" onClick={e => e.stopPropagation()}>
-            <div className="fc-modal-header">
-                <h3>Importar Transacciones</h3>
-                <button className="fc-modal-close" onClick={onClose}><FiX /></button>
-            </div>
-            <div className="fc-modal-body">
-                <div className="fc-dropzone">
-                    <FiUpload className="fc-dropzone-icon" />
-                    <p>Arrastra tu archivo aquí</p>
-                    <span>CSV, Excel (.xlsx) — máx 10 MB</span>
-                    <button className="fc-btn-outline">Seleccionar archivo</button>
+const ImportModal = ({ onClose, onSuccess }: { onClose: () => void; onSuccess: () => void }) => {
+    const inputRef              = useRef<HTMLInputElement>(null);
+    const [loading, setLoading] = useState(false);
+
+    const handleFile = async (file: File) => {
+        setLoading(true);
+        try {
+            const { imported } = await TransactionService.importFile(file);
+            toast.success(`Se importaron ${imported} transacciones.`);
+            onSuccess();
+            onClose();
+        } catch (err: any) {
+            toast.error(err?.response?.data?.message ?? 'Error al importar el archivo.');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleDrop = (e: React.DragEvent) => {
+        e.preventDefault();
+        const file = e.dataTransfer.files[0];
+        if (file) handleFile(file);
+    };
+
+    return (
+        <div className="fc-modal-overlay" onClick={onClose}>
+            <div className="fc-modal" onClick={e => e.stopPropagation()}>
+                <div className="fc-modal-header">
+                    <h3>Importar Transacciones</h3>
+                    <button className="fc-modal-close" onClick={onClose}><FiX /></button>
+                </div>
+                <div className="fc-modal-body">
+                    <div
+                        className="fc-dropzone"
+                        onDragOver={e => e.preventDefault()}
+                        onDrop={handleDrop}
+                        onClick={() => inputRef.current?.click()}
+                    >
+                        <FiUpload className="fc-dropzone-icon" />
+                        <p>Arrastra tu archivo aquí o haz clic para seleccionar</p>
+                        <span>CSV, Excel (.xlsx)</span>
+                        <input
+                            ref={inputRef}
+                            type="file"
+                            accept=".csv,.xlsx"
+                            style={{ display: 'none' }}
+                            onChange={e => { const f = e.target.files?.[0]; if (f) handleFile(f); }}
+                        />
+                    </div>
+                </div>
+                <div className="fc-modal-footer">
+                    <button className="fc-btn-ghost" onClick={onClose}>Cancelar</button>
+                    <button className="fc-btn-primary" disabled={loading}>
+                        {loading ? 'Importando…' : 'Importar'}
+                    </button>
                 </div>
             </div>
-            <div className="fc-modal-footer">
-                <button className="fc-btn-ghost" onClick={onClose}>Cancelar</button>
-                <button className="fc-btn-primary">Importar</button>
-            </div>
         </div>
-    </div>
-);
+    );
+};
 
 // ─── Modal: Exportar ──────────────────────────────────────────────────────────
 
-const ExportModal = ({ onClose }: { onClose: () => void }) => (
-    <div className="fc-modal-overlay" onClick={onClose}>
-        <div className="fc-modal" onClick={e => e.stopPropagation()}>
-            <div className="fc-modal-header">
-                <h3>Exportar Reporte</h3>
-                <button className="fc-modal-close" onClick={onClose}><FiX /></button>
-            </div>
-            <div className="fc-modal-body">
-                <p className="fc-modal-sub">Formato:</p>
-                <div className="fc-export-options">
-                    {['CSV', 'Excel (.xlsx)', 'PDF'].map(fmt => (
-                        <label key={fmt} className="fc-export-option">
-                            <input type="radio" name="format" defaultChecked={fmt === 'CSV'} />
-                            <span>{fmt}</span>
-                        </label>
-                    ))}
+const ExportModal = ({ onClose }: { onClose: () => void }) => {
+    const [format, setFormat] = useState<'csv' | 'pdf'>('csv');
+
+    const handleDownload = () => {
+        const url = TransactionService.getExportUrl(format);
+        window.open(url, '_blank');
+        onClose();
+    };
+
+    return (
+        <div className="fc-modal-overlay" onClick={onClose}>
+            <div className="fc-modal" onClick={e => e.stopPropagation()}>
+                <div className="fc-modal-header">
+                    <h3>Exportar Reporte</h3>
+                    <button className="fc-modal-close" onClick={onClose}><FiX /></button>
                 </div>
-                <p className="fc-modal-sub" style={{ marginTop: '1.2rem' }}>Rango de fechas:</p>
-                <div className="fc-date-row">
-                    <input type="date" className="fc-date-input" />
-                    <span>—</span>
-                    <input type="date" className="fc-date-input" />
+                <div className="fc-modal-body">
+                    <p className="fc-modal-sub">Formato:</p>
+                    <div className="fc-export-options">
+                        {(['csv', 'pdf'] as const).map(fmt => (
+                            <label key={fmt} className="fc-export-option">
+                                <input
+                                    type="radio"
+                                    name="format"
+                                    checked={format === fmt}
+                                    onChange={() => setFormat(fmt)}
+                                />
+                                <span>{fmt.toUpperCase()}</span>
+                            </label>
+                        ))}
+                    </div>
                 </div>
-            </div>
-            <div className="fc-modal-footer">
-                <button className="fc-btn-ghost" onClick={onClose}>Cancelar</button>
-                <button className="fc-btn-primary"><FiDownload /> Descargar</button>
+                <div className="fc-modal-footer">
+                    <button className="fc-btn-ghost" onClick={onClose}>Cancelar</button>
+                    <button className="fc-btn-primary" onClick={handleDownload}>
+                        <FiDownload /> Descargar
+                    </button>
+                </div>
             </div>
         </div>
-    </div>
-);
+    );
+};
 
 // ─── Main Component ───────────────────────────────────────────────────────────
 
 interface FinanceChartsProps {
-    summary: DashboardSummary;
-    onRefresh: () => void;   // llama al padre para recargar el dashboard
+    summary: TransactionSummary;
+    onRefresh: () => void;
 }
 
 const FinanceCharts = ({ summary, onRefresh }: FinanceChartsProps) => {
@@ -320,22 +323,21 @@ const FinanceCharts = ({ summary, onRefresh }: FinanceChartsProps) => {
     const [showExport, setShowExport] = useState(false);
     const [addModal, setAddModal]     = useState<{ open: boolean; tab: TabType }>({ open: false, tab: 'gasto' });
 
-    // ── Datos reales ──────────────────────────────────────────────────────────
-    const [categories, setCategories]     = useState<Category[]>([]);
-    const [transactions, setTransactions] = useState<Transaction[]>([]);
-    const [loadingData, setLoadingData]   = useState(true);
+    const [categoryDist, setCategoryDist]  = useState<CategoryDistribution[]>([]);
+    const [transactions, setTransactions]  = useState<Transaction[]>([]);
+    const [loadingData, setLoadingData]    = useState(true);
 
     useEffect(() => {
         const fetchData = async () => {
             try {
                 const [cats, txs] = await Promise.all([
-                    CategoryService.getAll(),
+                    TransactionService.getCategories(),
                     TransactionService.getAll(),
                 ]);
-                setCategories(cats);
+                setCategoryDist(cats);
                 setTransactions(txs);
             } catch (e) {
-                console.error('Error cargando categorías/transacciones:', e);
+                console.error('Error cargando datos:', e);
             } finally {
                 setLoadingData(false);
             }
@@ -343,32 +345,24 @@ const FinanceCharts = ({ summary, onRefresh }: FinanceChartsProps) => {
         fetchData();
     }, []);
 
-    // ── Derivar datos para los charts ─────────────────────────────────────────
-
-    // Pie chart: categorías con su gasto real acumulado
-    const categoryChartData = categories.map((cat, i) => {
-        const colors = Object.values(CATEGORY_COLORS);
-        return {
-            name: cat.name,
-            value: Number(cat.budget),
-            color: CATEGORY_COLORS[cat.name] ?? colors[i % colors.length],
-        };
-    }).filter(c => c.value > 0);
-
-    // Tabla: últimas 6 transacciones
-    const recentTxs = transactions.slice(0, 6);
-
     // Summary cards
-    const totalGasto   = summary.total_outcome;
-    const totalIngreso = summary.total_income;
-    const balance      = summary.balance_total;
+    const totalGasto   = summary.gastos;
+    const totalIngreso = summary.ingresos;
+    const balance      = summary.balance;
     const presupuesto  = totalIngreso || 1;
-    const restante     = balance;
     const porcentaje   = Math.min(Math.round((totalGasto / presupuesto) * 100), 100);
 
     const [activeIndex, setActiveIndex] = useState<number | null>(null);
 
     const openAdd = (tab: TabType) => setAddModal({ open: true, tab });
+
+    const handleImportSuccess = () => {
+        onRefresh();
+        setLoadingData(true);
+        TransactionService.getAll()
+            .then(txs => setTransactions(txs))
+            .finally(() => setLoadingData(false));
+    };
 
     return (
         <div className="fc-wrapper">
@@ -411,13 +405,13 @@ const FinanceCharts = ({ summary, onRefresh }: FinanceChartsProps) => {
                     <div className="fc-card-icon fc-icon--cyan"><FiTrendingDown /></div>
                     <div className="fc-card-info">
                         <p className="fc-card-label">Balance</p>
-                        <h2 className="fc-card-value" style={{ color: restante > 0 ? '#AEFF00' : '#ef4444' }}>
-                            ${restante.toLocaleString()}
+                        <h2 className="fc-card-value" style={{ color: balance > 0 ? '#AEFF00' : '#ef4444' }}>
+                            ${balance.toLocaleString()}
                         </h2>
                     </div>
-                    <div className={`fc-card-badge ${restante > 0 ? 'fc-badge--ok' : 'fc-badge--err'}`}>
-                        {restante > 0 ? <FiArrowDownRight /> : <FiArrowUpRight />}
-                        {restante > 0 ? 'Bajo control' : 'Excedido'}
+                    <div className={`fc-card-badge ${balance > 0 ? 'fc-badge--ok' : 'fc-badge--err'}`}>
+                        {balance > 0 ? <FiArrowDownRight /> : <FiArrowUpRight />}
+                        {balance > 0 ? 'Bajo control' : 'Excedido'}
                     </div>
                 </div>
             </div>
@@ -425,33 +419,36 @@ const FinanceCharts = ({ summary, onRefresh }: FinanceChartsProps) => {
             {/* ── Charts Row ── */}
             <div className="fc-charts-row">
 
-                {/* Donut — categorías reales */}
+                {/* Donut — distribución porcentual del mes */}
                 <div className="fc-panel fc-panel--pie">
                     <div className="fc-panel-header">
-                        <h3>Presupuesto por Categoría</h3>
-                        <span className="fc-panel-sub">{new Date().toLocaleString('es-MX', { month: 'long', year: 'numeric' })}</span>
+                        <h3>Gastos por Categoría</h3>
+                        <span className="fc-panel-sub">
+                            {new Date().toLocaleString('es-MX', { month: 'long', year: 'numeric' })}
+                        </span>
                     </div>
 
                     {loadingData ? (
                         <div className="fc-chart-loading">Cargando categorías…</div>
-                    ) : categoryChartData.length === 0 ? (
-                        <div className="fc-chart-empty">Sin categorías aún</div>
+                    ) : categoryDist.length === 0 ? (
+                        <div className="fc-chart-empty">Sin gastos este mes</div>
                     ) : (
                         <div className="fc-pie-layout">
                             <ResponsiveContainer width="100%" height={220}>
                                 <PieChart>
                                     <Pie
-                                        data={categoryChartData}
+                                        data={categoryDist}
                                         cx="50%" cy="50%"
                                         innerRadius={60} outerRadius={90}
                                         paddingAngle={3}
                                         dataKey="value"
+                                        nameKey="label"
                                         onMouseEnter={(_, i) => setActiveIndex(i)}
                                         onMouseLeave={() => setActiveIndex(null)}
                                     >
-                                        {categoryChartData.map((entry, i) => (
+                                        {categoryDist.map((entry, i) => (
                                             <Cell
-                                                key={entry.name}
+                                                key={entry.label}
                                                 fill={entry.color}
                                                 opacity={activeIndex === null || activeIndex === i ? 1 : 0.35}
                                                 stroke="none"
@@ -462,16 +459,16 @@ const FinanceCharts = ({ summary, onRefresh }: FinanceChartsProps) => {
                                 </PieChart>
                             </ResponsiveContainer>
                             <ul className="fc-legend">
-                                {categoryChartData.map((d, i) => (
+                                {categoryDist.map((d, i) => (
                                     <li
-                                        key={d.name}
+                                        key={d.label}
                                         className={`fc-legend-item ${activeIndex === i ? 'fc-legend-item--active' : ''}`}
                                         onMouseEnter={() => setActiveIndex(i)}
                                         onMouseLeave={() => setActiveIndex(null)}
                                     >
                                         <span className="fc-legend-dot" style={{ background: d.color }} />
-                                        <span className="fc-legend-name">{d.name}</span>
-                                        <span className="fc-legend-val">${Number(d.value).toLocaleString()}</span>
+                                        <span className="fc-legend-name">{d.label}</span>
+                                        <span className="fc-legend-val">{d.value}%</span>
                                     </li>
                                 ))}
                             </ul>
@@ -483,13 +480,10 @@ const FinanceCharts = ({ summary, onRefresh }: FinanceChartsProps) => {
                     </button>
                 </div>
 
-                {/* Bar — historial mensual (pendiente endpoint) */}
+                {/* Bar — historial mensual */}
                 <div className="fc-panel fc-panel--bar">
                     <div className="fc-panel-header">
                         <h3>Historial Mensual</h3>
-                        <span className="fc-panel-sub fc-panel-sub--pending" title="Requiere endpoint GET /api/transactions/monthly/">
-                            ⏳ Pendiente conexión
-                        </span>
                     </div>
                     <ResponsiveContainer width="100%" height={220}>
                         <BarChart data={MONTHLY_MOCK} barGap={4} barCategoryGap="30%">
@@ -521,7 +515,7 @@ const FinanceCharts = ({ summary, onRefresh }: FinanceChartsProps) => {
                 <div className="fc-table-wrap">
                     {loadingData ? (
                         <div className="fc-chart-loading">Cargando transacciones…</div>
-                    ) : recentTxs.length === 0 ? (
+                    ) : transactions.length === 0 ? (
                         <div className="fc-chart-empty">
                             No hay transacciones aún.{' '}
                             <button className="fc-link-btn" onClick={() => openAdd('gasto')}>Agrega una</button>
@@ -537,26 +531,19 @@ const FinanceCharts = ({ summary, onRefresh }: FinanceChartsProps) => {
                                 </tr>
                             </thead>
                             <tbody>
-                                {recentTxs.map(t => {
-                                    const isIncome  = !!t.income_details;
-                                    const amount    = isIncome
-                                        ? Number(t.income_details!.amount)
-                                        : Number(t.outcome_details?.expense ?? 0);
-                                    const catName   = categories.find(c => c.id === t.category)?.name ?? '—';
-                                    return (
-                                        <tr key={t.id}>
-                                            <td>
-                                                <span className={`fc-tx-dot fc-tx-dot--${isIncome ? 'in' : 'out'}`} />
-                                                {t.description}
-                                            </td>
-                                            <td><span className="fc-chip">{catName}</span></td>
-                                            <td className="fc-muted">{t.date ?? '—'}</td>
-                                            <td className={`fc-amount fc-amount--${isIncome ? 'in' : 'out'}`}>
-                                                {isIncome ? '+' : '-'}${amount.toLocaleString()}
-                                            </td>
-                                        </tr>
-                                    );
-                                })}
+                                {transactions.slice(0, 6).map(t => (
+                                    <tr key={t.id}>
+                                        <td>
+                                            <span className={`fc-tx-dot fc-tx-dot--${t.type === 'ingreso' ? 'in' : 'out'}`} />
+                                            {t.desc}
+                                        </td>
+                                        <td><span className="fc-chip">{t.category}</span></td>
+                                        <td className="fc-muted">{t.date}</td>
+                                        <td className={`fc-amount fc-amount--${t.type === 'ingreso' ? 'in' : 'out'}`}>
+                                            {t.type === 'ingreso' ? '+' : '-'}${t.amount.toLocaleString()}
+                                        </td>
+                                    </tr>
+                                ))}
                             </tbody>
                         </table>
                     )}
@@ -567,12 +554,19 @@ const FinanceCharts = ({ summary, onRefresh }: FinanceChartsProps) => {
             {addModal.open && (
                 <AddTransactionModal
                     defaultTab={addModal.tab}
-                    categories={categories}
                     onClose={() => setAddModal({ open: false, tab: 'gasto' })}
-                    onSuccess={onRefresh}
+                    onSuccess={() => {
+                        onRefresh();
+                        setAddModal({ open: false, tab: 'gasto' });
+                    }}
                 />
             )}
-            {showImport && <ImportModal onClose={() => setShowImport(false)} />}
+            {showImport && (
+                <ImportModal
+                    onClose={() => setShowImport(false)}
+                    onSuccess={handleImportSuccess}
+                />
+            )}
             {showExport && <ExportModal onClose={() => setShowExport(false)} />}
         </div>
     );
